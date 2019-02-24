@@ -16,14 +16,15 @@ contract Shitcoin is Ownable, ERC20{
   uint constant IN_2ND_ICO = 4; // ICO 2nd round
   uint constant IN_3ND_ICO = 5; // ICO 2nd round
 
-  uint moneyAll = 0;
+  uint public moneyAll = 0;
   uint totalRemainingTokensForSales = 500000000;
 
   uint public privateSalePrice;
 
   mapping(address => bool) public privateList;
   mapping(address => bool) public whiteList;
-  mapping(address => uint256) internal balances;
+
+  event Print(uint val);
 
   constructor(address _adminAddr, address _portalAddr) public Ownable(){
     require(_adminAddr != address(0));
@@ -52,7 +53,7 @@ contract Shitcoin is Ownable, ERC20{
       require(state != 0);
 
       bool isPrivate = privateList[msg.sender];
-      if (isPrivate == true && state == PRIVATE_SALE) {
+      if (isPrivate == true && state != NOT_SALE) {
           return issueTokensForPrivateInvestor();
       }
     //   if (state == PRESALE) {
@@ -71,7 +72,10 @@ contract Shitcoin is Ownable, ERC20{
     function issueTokens(uint256 _price) private {
 
         uint tokenAmount = msg.value.mul(_price).mul(10**18).div(1 ether);
-        balances[msg.sender] = balances[msg.sender].add(tokenAmount);
+        emit Print(tokenAmount);
+        emit Print(msg.value);
+        emit Print(uint(_price));
+        _balances[msg.sender] = _balances[msg.sender].add(tokenAmount);
         totalRemainingTokensForSales = totalRemainingTokensForSales.sub(tokenAmount);
         moneyAll.add(msg.value);
     }
@@ -80,6 +84,17 @@ contract Shitcoin is Ownable, ERC20{
         require(_tokenPerEther > 0);
 
         privateSalePrice = _tokenPerEther;
+    }
+
+    function addToPrivateList(address privateClient) public onlyOwnerOrAdmin {
+        require(privateClient != address(0));
+
+        privateList[privateClient] = true;
+    }
+
+    function startPrivateSale() public onlyOwnerOrAdmin {
+        require(privateSalePrice != 0);
+        _state = PRIVATE_SALE;
     }
 
 }
